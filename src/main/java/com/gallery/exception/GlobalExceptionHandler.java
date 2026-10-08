@@ -1,6 +1,7 @@
 package com.gallery.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -27,8 +28,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> invalid(MethodArgumentNotValidException e) {
-        String details = e.getBindingResult().getFieldErrors().stream()
-                .map(f -> f.getField() + " " + f.getDefaultMessage())
+        String details = e.getBindingResult().getAllErrors().stream()
+                .map(err -> err instanceof FieldError f
+                        ? f.getField() + " " + f.getDefaultMessage()
+                        : err.getDefaultMessage())
                 .collect(Collectors.joining(", "));
         return Map.of("error", "Validation failed: " + details);
     }

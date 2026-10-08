@@ -1,5 +1,7 @@
 package com.gallery.controller;
 
+import com.gallery.annotation.CurrentUser;
+import com.gallery.annotation.PostCreated;
 import com.gallery.dto.PhotoRequest;
 import com.gallery.dto.PhotoResponse;
 import com.gallery.service.PhotoService;
@@ -8,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -18,34 +19,32 @@ public class PhotoController {
 
     private final PhotoService photoService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public PhotoResponse create(@Valid @RequestBody PhotoRequest request, Principal principal) {
-        return photoService.create(request, principal.getName());
+    @PostCreated
+    public PhotoResponse create(@Valid @RequestBody PhotoRequest request, @CurrentUser String username) {
+        return photoService.create(request, username);
     }
 
     @GetMapping
-    public List<PhotoResponse> getAll(Principal principal) {
-        return photoService.getAll(principal.getName());
+    public List<PhotoResponse> getAll(@CurrentUser String username) {
+        return photoService.getAll(username);
     }
 
     @GetMapping("/{id}")
-    public PhotoResponse getById(@PathVariable Long id, Principal principal) {
-        return photoService.getById(id, principal.getName());
+    public PhotoResponse getById(@PathVariable Long id, @CurrentUser String username) {
+        return photoService.getById(id, username);
     }
 
     @PutMapping("/{id}")
-    public PhotoResponse update(@PathVariable Long id, @Valid @RequestBody PhotoRequest request, Principal principal) {
-        return photoService.update(id, request, principal.getName());
+    public PhotoResponse update(@PathVariable Long id, @Valid @RequestBody PhotoRequest request, @CurrentUser String username) {
+        return photoService.update(id, request, username);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id, Principal principal) {
-        photoService.delete(id, principal.getName());
+    public void delete(@PathVariable Long id, @CurrentUser String username) {
+        photoService.delete(id, username);
     }
 
-    /** Фільтр-ланцюг пускає будь-якого автентифікованого, а ADMIN перевіряє @PreAuthorize у сервісі. */
     @GetMapping("/admin/all")
     public List<PhotoResponse> getAllForAdmin() {
         return photoService.getAllForAdmin();

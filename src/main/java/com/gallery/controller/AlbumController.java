@@ -1,5 +1,7 @@
 package com.gallery.controller;
 
+import com.gallery.annotation.CurrentUser;
+import com.gallery.annotation.PostCreated;
 import com.gallery.dto.AlbumRequest;
 import com.gallery.dto.AlbumResponse;
 import com.gallery.service.AlbumService;
@@ -8,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -18,30 +19,29 @@ public class AlbumController {
 
     private final AlbumService albumService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public AlbumResponse create(@Valid @RequestBody AlbumRequest request, Principal principal) {
-        return albumService.create(request, principal.getName());
+    @PostCreated
+    public AlbumResponse create(@Valid @RequestBody AlbumRequest request, @CurrentUser String username) {
+        return albumService.create(request, username);
     }
 
     @GetMapping
-    public List<AlbumResponse> getAll(Principal principal) {
-        return albumService.getAll(principal.getName());
+    public List<AlbumResponse> getAll(@CurrentUser String username) {
+        return albumService.getAll(username);
     }
 
     @GetMapping("/{id}")
-    public AlbumResponse getById(@PathVariable Long id, Principal principal) {
-        return albumService.getById(id, principal.getName());
+    public AlbumResponse getById(@PathVariable Long id, @CurrentUser String username) {
+        return albumService.getById(id, username);
     }
 
     @PutMapping("/{id}")
-    public AlbumResponse update(@PathVariable Long id, @Valid @RequestBody AlbumRequest request, Principal principal) {
-        return albumService.update(id, request, principal.getName());
+    public AlbumResponse update(@PathVariable Long id, @Valid @RequestBody AlbumRequest request, @CurrentUser String username) {
+        return albumService.update(id, request, username);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id, Principal principal) {
-        albumService.delete(id, principal.getName());
+    public void delete(@PathVariable Long id, @CurrentUser String username) {
+        albumService.delete(id, username);
     }
 }

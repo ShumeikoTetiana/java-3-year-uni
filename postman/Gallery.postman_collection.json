@@ -642,6 +642,49 @@
           ]
         },
         {
+          "name": "ЛР3: PUBLIC photo without tags -> 400 (custom constraint)",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{userToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/photos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"Public\",\"url\":\"http://example.com/a.jpg\",\"accessLevel\":\"PUBLIC\",\"tagIds\":[]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Message explains the rule', () => {",
+                  "  const err = pm.response.json().error;",
+                  "  pm.expect(err).to.include('at least one tag');",
+                  "  pm.expect(err).to.include('https://');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Delete photo",
           "request": {
             "method": "DELETE",

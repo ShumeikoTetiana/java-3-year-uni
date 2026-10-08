@@ -1,5 +1,6 @@
 package com.gallery.controller;
 
+import com.gallery.annotation.PostCreated;
 import com.gallery.dto.TagDto;
 import com.gallery.service.TagService;
 import jakarta.validation.Valid;
@@ -16,8 +17,7 @@ public class TagController {
 
     private final TagService tagService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    @PostCreated
     public TagDto create(@Valid @RequestBody TagDto dto) {
         return tagService.create(dto);
     }
@@ -32,7 +32,6 @@ public class TagController {
         return tagService.update(id, dto);
     }
 
-    /** DELETE /api/tags/** — лише ADMIN (правило у SecurityFilterChain). */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
