@@ -1,0 +1,67 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-albums
+      author: gallery
+      changes:
+        - createTable:
+            tableName: albums
+            columns:
+              - column: {name: id, type: BIGINT, autoIncrement: true, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: name, type: VARCHAR(255), constraints: {nullable: false}}
+              - column: {name: description, type: VARCHAR(1000)}
+              - column: {name: owner, type: VARCHAR(255), constraints: {nullable: false}}
+              - column: {name: created_at, type: TIMESTAMP, defaultValueComputed: now(), constraints: {nullable: false}}
+  - changeSet:
+      id: 002-create-tags
+      author: gallery
+      changes:
+        - createTable:
+            tableName: tags
+            columns:
+              - column: {name: id, type: BIGINT, autoIncrement: true, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: name, type: VARCHAR(100), constraints: {nullable: false, unique: true}}
+  - changeSet:
+      id: 003-create-photos
+      author: gallery
+      changes:
+        - createTable:
+            tableName: photos
+            columns:
+              - column: {name: id, type: BIGINT, autoIncrement: true, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: title, type: VARCHAR(255), constraints: {nullable: false}}
+              - column: {name: url, type: VARCHAR(1000), constraints: {nullable: false}}
+              - column: {name: description, type: VARCHAR(1000)}
+              - column: {name: access_level, type: VARCHAR(20), constraints: {nullable: false}}
+              - column: {name: owner, type: VARCHAR(255), constraints: {nullable: false}}
+              - column: {name: album_id, type: BIGINT}
+              - column: {name: created_at, type: TIMESTAMP, defaultValueComputed: now(), constraints: {nullable: false}}
+        - addForeignKeyConstraint:
+            baseTableName: photos
+            baseColumnNames: album_id
+            referencedTableName: albums
+            referencedColumnNames: id
+            constraintName: fk_photos_album
+            onDelete: SET NULL
+  - changeSet:
+      id: 004-create-photo-tags
+      author: gallery
+      changes:
+        - createTable:
+            tableName: photo_tags
+            columns:
+              - column: {name: photo_id, type: BIGINT, constraints: {primaryKey: true, nullable: false}}
+              - column: {name: tag_id, type: BIGINT, constraints: {primaryKey: true, nullable: false}}
+        - addForeignKeyConstraint:
+            baseTableName: photo_tags
+            baseColumnNames: photo_id
+            referencedTableName: photos
+            referencedColumnNames: id
+            constraintName: fk_photo_tags_photo
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: photo_tags
+            baseColumnNames: tag_id
+            referencedTableName: tags
+            referencedColumnNames: id
+            constraintName: fk_photo_tags_tag
+            onDelete: CASCADE

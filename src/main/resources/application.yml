@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/gallery
+    username: postgres
+    password: 12345
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: gallery-app
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:TJe29NMRupIYEw640x4P0RkRe4aJnpI6}
+            scope: openid,profile,email
+            authorization-grant-type: authorization_code
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8180/realms/gallery
+            user-name-attribute: preferred_username
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/gallery
+logging:
+  level:
+    org:
+      liquibase: DEBUG

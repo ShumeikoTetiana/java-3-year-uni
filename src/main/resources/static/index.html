@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Photo Gallery</title>
+  <style>
+    body{font-family:sans-serif;max-width:900px;margin:20px auto;padding:0 10px}
+    section{border:1px solid #ccc;border-radius:6px;padding:10px;margin:12px 0}
+    input,select,button{margin:3px;padding:4px}
+    li{margin:6px 0}
+  </style>
+</head>
+<body>
+<h1>Photo Gallery <small><a href="/logout">Вийти</a></small></h1>
+
+<section>
+  <h2>Теги</h2>
+  <input id="t-name" placeholder="Назва тегу">
+  <button onclick="saveTag()">Зберегти</button>
+  <ul id="tags"></ul>
+</section>
+
+<section>
+  <h2>Альбоми</h2>
+  <input id="a-name" placeholder="Назва">
+  <input id="a-desc" placeholder="Опис">
+  <button onclick="saveAlbum()">Зберегти</button>
+  <ul id="albums"></ul>
+</section>
+
+<section>
+  <h2>Фото</h2>
+  <input id="p-title" placeholder="Назва">
+  <input id="p-url" placeholder="URL фото">
+  <input id="p-desc" placeholder="Опис">
+  <select id="p-access"><option>PRIVATE</option><option>SHARED</option><option>PUBLIC</option></select>
+  <select id="p-album"></select>
+  <select id="p-tags" multiple title="Теги (Ctrl+клік)"></select>
+  <button onclick="savePhoto()">Зберегти</button>
+  <ul id="photos"></ul>
+</section>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const data = {albums: [], tags: [], photos: []};
+  const editing = {};
+
+  async function api(method, url, body) {
+    const r = await fetch(url, {method, headers: {'Content-Type': 'application/json'},
+      body: body ? JSON.stringify(body) : undefined});
+    if (r.status === 403) { alert('Недостатньо прав (403)'); return null; }
+    if (!r.ok) { alert('Помилка ' + r.status); return null; }
+    return r.status === 204 ? true : r.json();
+  }
+
+  async function load() {
+    data.albums = await api('GET', '/api/albums') || [];
+    data.tags = await api('GET', '/api/tags') || [];
+    data.photos = await api('GET', '/api/photos') || [];
+
+    $('tags').innerHTML = data.tags.map((t, i) =>
+            `<li>${esc(t.name)} <button onclick="editTag(${i})">Ред.</button>
+     <button onclick="del('tags',${t.id})">Видалити (ADMIN)</button></li>`).join('');
+    $('albums').innerHTML = data.albums.map((a, i) =>
+            `<li>${esc(a.name)} — ${esc(a.description)} <button onclick="editAlbum(${i})">Ред.</button>
+     <button onclick="del('albums',${a.id})">Видалити</button></li>`).join('');
+    $('photos').innerHTML = data.photos.map((p, i) =>
+            `<li><a href="${esc(p.url)}" target="_blank">${esc(p.title)}</a> [${p.accessLevel}]
+     альбом: ${p.albumId ?? '—'}, теги: ${p.tags.map(t => esc(t.name)).join(', ') || '—'}
+     <button onclick="editPhoto(${i})">Ред.</button>
+     <button onclick="del('photos',${p.id})">Видалити</button></li>`).join('');
+    $('p-album').innerHTML = '<option value="">— без альбому —</option>' +
+            data.albums.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+    $('p-tags').innerHTML = data.tags.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  }
+
+  async function save(kind, url, body) {
+    const id = editing[kind];
+    await api(id ? 'PUT' : 'POST', id ? `${url}/${id}` : url, body);
+    editing[kind] = null;
+    document.querySelectorAll('input').forEach(i => i.value = '');
+    load();
+  }
+  async function del(kind, id) { await api('DELETE', `/api/${kind}/${id}`); load(); }
+
+  const saveTag = () => save('tag', '/api/tags', {name: $('t-name').value});
+  const saveAlbum = () => save('album', '/api/albums', {name: $('a-name').value, description: $('a-desc').value});
+  const savePhoto = () => save('photo', '/api/photos', {
+    title: $('p-title').value, url: $('p-url').value, description: $('p-desc').value,
+    accessLevel: $('p-access').value, albumId: $('p-album').value || null,
+    tagIds: [...$('p-tags').selectedOptions].map(o => +o.value)});
+
+  function editTag(i) { editing.tag = data.tags[i].id; $('t-name').value = data.tags[i].name; }
+  function editAlbum(i) {
+    editing.album = data.albums[i].id; $('a-name').value = data.albums[i].name; $('a-desc').value = data.albums[i].description || '';
+  }
+  function editPhoto(i) {
+    const p = data.photos[i]; editing.photo = p.id;
+    $('p-title').value = p.title; $('p-url').value = p.url; $('p-desc').value = p.description || '';
+    $('p-access').value = p.accessLevel; $('p-album').value = p.albumId ?? '';
+    [...$('p-tags').options].forEach(o => o.selected = p.tags.some(t => t.id == o.value));
+  }
+  load();
+</script>
+</body>
+</html>
