@@ -1,5 +1,7 @@
 package com.gallery.service;
 
+import com.gallery.annotation.AuditTrail;
+import com.gallery.annotation.Retry;
 import com.gallery.dto.AlbumRequest;
 import com.gallery.dto.AlbumResponse;
 import com.gallery.exception.NotFoundException;
@@ -20,6 +22,8 @@ public class AlbumService {
     private final AlbumRepository albumRepository;
     private final AlbumMapper albumMapper;
 
+    @AuditTrail("album.create")
+    @Retry(maxAttempts = 3)
     public AlbumResponse create(AlbumRequest request, String owner) {
         Album album = albumMapper.toEntity(request);
         album.setOwner(owner);
@@ -36,12 +40,14 @@ public class AlbumService {
         return albumMapper.toResponse(getOwnedEntity(id, owner));
     }
 
+    @AuditTrail("album.update")
     public AlbumResponse update(Long id, AlbumRequest request, String owner) {
         Album album = getOwnedEntity(id, owner);
         albumMapper.update(request, album);
         return albumMapper.toResponse(albumRepository.save(album));
     }
 
+    @AuditTrail("album.delete")
     public void delete(Long id, String owner) {
         albumRepository.delete(getOwnedEntity(id, owner));
     }

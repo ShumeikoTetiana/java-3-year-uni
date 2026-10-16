@@ -1,5 +1,8 @@
 package com.gallery.service;
 
+import com.gallery.annotation.AuditTrail;
+import com.gallery.annotation.RateLimited;
+import com.gallery.annotation.Retry;
 import com.gallery.dto.PhotoRequest;
 import com.gallery.dto.PhotoResponse;
 import com.gallery.exception.NotFoundException;
@@ -27,6 +30,9 @@ public class PhotoService {
     private final AlbumService albumService;
     private final PhotoMapper photoMapper;
 
+    @AuditTrail("photo.create")
+    @RateLimited(maxCalls = 5, perSeconds = 60)
+    @Retry(maxAttempts = 3)
     public PhotoResponse create(PhotoRequest request, String owner) {
         Photo photo = photoMapper.toEntity(request);
         photo.setOwner(owner);
@@ -44,6 +50,7 @@ public class PhotoService {
         return photoMapper.toResponse(getOwnedEntity(id, owner));
     }
 
+    @AuditTrail("photo.update")
     public PhotoResponse update(Long id, PhotoRequest request, String owner) {
         Photo photo = getOwnedEntity(id, owner);
         photoMapper.update(request, photo);
@@ -51,6 +58,7 @@ public class PhotoService {
         return photoMapper.toResponse(photoRepository.save(photo));
     }
 
+    @AuditTrail("photo.delete")
     public void delete(Long id, String owner) {
         photoRepository.delete(getOwnedEntity(id, owner));
     }

@@ -1,5 +1,7 @@
 package com.gallery.service;
 
+import com.gallery.annotation.AuditTrail;
+import com.gallery.annotation.Retry;
 import com.gallery.dto.TagDto;
 import com.gallery.exception.NotFoundException;
 import com.gallery.mapper.TagMapper;
@@ -19,6 +21,8 @@ public class TagService {
     private final TagRepository tagRepository;
     private final TagMapper tagMapper;
 
+    @AuditTrail("tag.create")
+    @Retry(maxAttempts = 3)
     public TagDto create(TagDto dto) {
         if (tagRepository.existsByName(dto.name())) {
             throw new IllegalArgumentException("Tag already exists: " + dto.name());
@@ -31,6 +35,7 @@ public class TagService {
         return tagRepository.findAll().stream().map(tagMapper::toDto).toList();
     }
 
+    @AuditTrail("tag.update")
     public TagDto update(Long id, TagDto dto) {
         Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Tag not found: " + id));
@@ -38,6 +43,7 @@ public class TagService {
         return tagMapper.toDto(tagRepository.save(tag));
     }
 
+    @AuditTrail("tag.delete")
     public void delete(Long id) {
         if (!tagRepository.existsById(id)) {
             throw new NotFoundException("Tag not found: " + id);
