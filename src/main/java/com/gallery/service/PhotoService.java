@@ -12,6 +12,8 @@ import com.gallery.model.Tag;
 import com.gallery.repository.PhotoRepository;
 import com.gallery.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,6 +32,7 @@ public class PhotoService {
     private final TagRepository tagRepository;
     private final AlbumService albumService;
     private final PhotoMapper photoMapper;
+    private final NotificationService notificationService;
 
     @AuditTrail("photo.create")
     @RateLimited(maxCalls = 5, perSeconds = 60)
@@ -37,7 +41,13 @@ public class PhotoService {
         Photo photo = photoMapper.toEntity(request);
         photo.setOwner(owner);
         linkAlbumAndTags(photo, request, owner);
-        return photoMapper.toResponse(photoRepository.save(photo));
+        PhotoResponse response = photoMapper.toResponse(photoRepository.save(photo));
+        try {
+            notificationService.notifyPhotoUploaded(owner, response.title()); // асинхронно, не чекаємо
+        } catch (TaskRejectedException e) {
+            log.warn("Notification skipped, async pool is full");
+        }
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -63,7 +73,6 @@ public class PhotoService {
         photoRepository.delete(getOwnedEntity(id, owner));
     }
 
-    /** Доступ лише для ADMIN — перевіряється через @PreAuthoriz. */
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
     public List<PhotoResponse> getAllForAdmin() {

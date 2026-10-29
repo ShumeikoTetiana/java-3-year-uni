@@ -36,6 +36,8 @@ class PhotoServiceTest {
     private AlbumService albumService;
     @Mock
     private PhotoMapper photoMapper;
+    @Mock
+    private NotificationService notificationService;
     @InjectMocks
     private PhotoService photoService;
 

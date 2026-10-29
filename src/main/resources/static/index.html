@@ -66,14 +66,15 @@
 
     $('tags').innerHTML = data.tags.map((t, i) =>
             `<li>${esc(t.name)} <button onclick="editTag(${i})">Ред.</button>
-     <button onclick="del('tags',${t.id})">Видалити (ADMIN)</button></li>`).join('');
+    <button onclick="del('tags',${t.id})">Видалити (ADMIN)</button></li>`).join('');
     $('albums').innerHTML = data.albums.map((a, i) =>
             `<li>${esc(a.name)} — ${esc(a.description)} <button onclick="editAlbum(${i})">Ред.</button>
-     <button onclick="del('albums',${a.id})">Видалити</button></li>`).join('');
+    <button onclick="del('albums',${a.id})">Видалити</button></li>`).join('');
     $('photos').innerHTML = data.photos.map((p, i) =>
             `<li><a href="${esc(p.url)}" target="_blank">${esc(p.title)}</a> [${p.accessLevel}]
      альбом: ${p.albumId ?? '—'}, теги: ${p.tags.map(t => esc(t.name)).join(', ') || '—'}
      <button onclick="editPhoto(${i})">Ред.</button>
+     <button onclick="processPhoto(${p.id})">Обробити</button>
      <button onclick="del('photos',${p.id})">Видалити</button></li>`).join('');
     $('p-album').innerHTML = '<option value="">— без альбому —</option>' +
             data.albums.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
@@ -86,6 +87,10 @@
     editing[kind] = null;
     document.querySelectorAll('input').forEach(i => i.value = '');
     load();
+  }
+  async function processPhoto(id) {
+    const r = await api('POST', `/api/photos/${id}/process`);
+    if (r) alert(`Мініатюра: ${r.thumbnail}, скан: ${r.scanResult}, час: ${r.tookMs} мс`);
   }
   async function del(kind, id) { await api('DELETE', `/api/${kind}/${id}`); load(); }
 
